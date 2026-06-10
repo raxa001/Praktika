@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import db
 
 def get_week_stats(user_id):
