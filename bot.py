@@ -27,7 +27,7 @@ def check_reminders():
         for user_id, remind_time in users:
             if remind_time == now:
                 try:
-                    bot.send_message(user_id, 'Напоминаю! Д1аязде хьан де х1инца.', reply_markup=main_menu())
+                    bot.send_message(user_id, 'Напоминаю! Д1аязде хьай ди новкъоаст.', reply_markup=main_menu())
                 except:
                     pass
         time.sleep(60)
