@@ -7,12 +7,6 @@ import threading
 import time
 import requests
 
-# Если используешь прокси - раскомментируй и укажи свои настройки
-# proxy_url = 'socks5://127.0.0.1:9150'  # для Tor
-# или
-# proxy_url = 'http://username:password@ip:port'  # для HTTP прокси
-
-# telebot.apihelper.proxy = {'http': proxy_url, 'https': proxy_url}
 
 bot = telebot.TeleBot('8882488095:AAFG5kP5qbu_d5Ye7t44YVP25Jz7S7wiook')
 
