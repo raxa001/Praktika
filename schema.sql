@@ -3,6 +3,7 @@ CREATE TABLE users (
     reminder_time TEXT
 );
 
+
 CREATE TABLE records (
     id SERIAL PRIMARY KEY,
     user_id BIGINT,
