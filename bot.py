@@ -5,8 +5,8 @@ import stats
 from datetime import datetime
 import threading
 import time
-import requests
-
+import matplotlib.pyplot as plt
+import io
 
 bot = telebot.TeleBot('8882488095:AAFG5kP5qbu_d5Ye7t44YVP25Jz7S7wiook')
 
@@ -16,8 +16,9 @@ user_temp = {}
 def main_menu():
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     markup.add(KeyboardButton('Записать де'), KeyboardButton('Статистик'))
-    markup.add(KeyboardButton('Хьа Историй'), KeyboardButton('Настройки'))
-    markup.add(KeyboardButton('Очистить данные'), KeyboardButton('Новкъостал'))
+    markup.add(KeyboardButton('График'), KeyboardButton('Хьа Историй'))
+    markup.add(KeyboardButton('Настройки'), KeyboardButton('Очистить данные'))
+    markup.add(KeyboardButton('Новкъостал'))
     return markup
 
 def check_reminders():
@@ -42,7 +43,7 @@ def start_message(message):
 
 @bot.message_handler(commands=['help'])
 def help_message(message):
-    bot.send_message(message.chat.id, 'Хьа новкъости командаж:\n\n/start - болх д1абувл бе\n/add - тахан 1а даьр записывать деж кнопк\n/stats - б1архьаж статистика\n/history - хьа ерриг историй\n/settings - напоминаний ха хувц воали хьо?\n/clear - д1адах деррига данныж\n/help - новкъостал эший?')
+    bot.send_message(message.chat.id, 'Хьа новкъости командаж:\n\n/start - болх д1абувл бе\n/add - тахан 1а даьр записывать деж кнопк\n/stats - б1архьаж статистика\n/graph - график\n/history - хьа ерриг историй\n/settings - напоминаний ха хувц воали хьо?\n/clear - д1адах деррига данныж\n/help - новкъостал эший?')
 
 @bot.message_handler(commands=['add'])
 def add_command(message):
@@ -51,6 +52,10 @@ def add_command(message):
 @bot.message_handler(commands=['stats'])
 def stats_command(message):
     show_stats_menu(message)
+
+@bot.message_handler(commands=['graph'])
+def graph_command(message):
+    show_graph_menu(message)
 
 @bot.message_handler(commands=['history'])
 def history_command(message):
@@ -85,6 +90,13 @@ def show_stats_menu(message):
     markup.add(InlineKeyboardButton('Укх бетт', callback_data='stats_month'))
     markup.add(InlineKeyboardButton('Инсайтаж', callback_data='stats_insights'))
     bot.send_message(message.chat.id, 'выбрать дел период статистики:', reply_markup=markup)
+
+@bot.message_handler(func=lambda message: message.text == 'График')
+def show_graph_menu(message):
+    markup = InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton('Укх к1ер', callback_data='graph_week'))
+    markup.add(InlineKeyboardButton('Укх бетт', callback_data='graph_month'))
+    bot.send_message(message.chat.id, 'выбрать период для графика:', reply_markup=markup)
 
 @bot.message_handler(func=lambda message: message.text == 'Хьа Историй')
 def show_history(message):
@@ -157,6 +169,48 @@ def callback_handler(call):
         elif call.data == 'stats_insights':
             result = stats.get_insights(chat_id)
         bot.send_message(chat_id, result)
+    
+    elif call.data.startswith('graph_'):
+        if call.data == 'graph_week':
+            generate_graph(chat_id, 7)
+        elif call.data == 'graph_month':
+            generate_graph(chat_id, 30)
+
+def generate_graph(chat_id, days):
+    records = db.get_records_by_period(chat_id, days)
+    if not records:
+        bot.send_message(chat_id, 'Нет данных за этот период.')
+        return
+    
+    dates = []
+    moods = []
+    study_hours = []
+    sleep_hours = []
+    
+    for record in records:
+        dates.append(record[0])
+        moods.append(record[1])
+        study_hours.append(record[2])
+        sleep_hours.append(record[3])
+    
+    plt.figure(figsize=(12, 6))
+    plt.plot(dates, moods, 'o-', label='Настроение', linewidth=2, markersize=8)
+    plt.plot(dates, study_hours, 's-', label='Часы учебы', linewidth=2, markersize=8)
+    plt.plot(dates, sleep_hours, '^-', label='Часы сна', linewidth=2, markersize=8)
+    plt.xlabel('Дата')
+    plt.ylabel('Значение')
+    plt.title(f'Динамика показателей за {days} дней')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', dpi=100)
+    buf.seek(0)
+    plt.close()
+    
+    bot.send_photo(chat_id, buf, caption=f'График за {days} дней')
 
 @bot.message_handler(func=lambda message: user_step.get(message.chat.id) == 'study')
 def get_study_hours(message):
@@ -225,7 +279,6 @@ def save_record(chat_id):
     bot.send_message(chat_id, 'Все данныЯЖ сохранить дер! Баркал новкъост.', reply_markup=main_menu())
     user_step.pop(chat_id, None)
     user_temp.pop(chat_id, None)
-
 
 print('Проверк юдаж латт')
 bot.get_me()
