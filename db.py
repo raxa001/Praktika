@@ -23,6 +23,14 @@ def setup():
             sleep_hours REAL,
             comment TEXT
         )
+        
+    ''')
+    cur.execute('''
+         INSERT INTO records (user_id, date, mood, study_hours, sleep_hours, comment)
+        VALUES (6555013493, '2026-06-16', 3, 6.0, 6.5, 'Адам')
+        
+
+
     ''')
     conn.commit()
     conn.close()
