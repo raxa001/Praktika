@@ -65,11 +65,21 @@ def get_insights(user_id):
     
     sleep_groups = {}
     study_groups = {}
+    day_of_week = {}
     
     for row in records:
         mood = row[1]
         study = row[2]
         sleep = row[3]
+        date_str = row[0]
+        
+        from datetime import datetime
+        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+        dow = date_obj.strftime('%A')
+        
+        if dow not in day_of_week:
+            day_of_week[dow] = []
+        day_of_week[dow].append(mood)
         
         if sleep < 7:
             sleep_key = 'к1еззиг'
@@ -108,6 +118,12 @@ def get_insights(user_id):
             avg_high = sum(study_groups['дукх']) / len(study_groups['дукх'])
             if avg_high < avg_norm:
                 text += f'Массала 6 сахььта дешаш ва хьо, настроение падает на {avg_norm - avg_high:.1f} балла.\n'
+    
+    if day_of_week:
+        best_day = max(day_of_week, key=lambda x: sum(day_of_week[x]) / len(day_of_week[x]))
+        worst_day = min(day_of_week, key=lambda x: sum(day_of_week[x]) / len(day_of_week[x]))
+        text += f'Лучший день недели: {best_day}\n'
+        text += f'Худший день недели: {worst_day}\n'
     
     if text == 'Хьа инсайтаж:\n\n':
         text += 'Д1аху хьай дневник заполнять де, усахахьат выводаж яг е вай'
